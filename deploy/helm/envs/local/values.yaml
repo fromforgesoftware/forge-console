@@ -1,0 +1,35 @@
+replicaCount: 1
+
+database:
+  host: postgres
+  port: '5432'
+  name: forge
+  schema: forge
+  ssl: disable
+  username: forge
+  password: forge
+
+# DEV ONLY — seeds a user you can sign into Forge with, and the managed
+# app registry (in-cluster admin API URLs). Well-known dev credentials.
+bootstrap:
+  enabled: true
+  adminEmail: admin@forge.local
+  adminPassword: admin1234
+  adminName: Administrator
+  apps: 'aegis=Aegis=http://forge-aegis,hallmark=Hallmark=http://forge-hallmark,herald=Herald=http://forge-herald,conduit=Conduit=http://forge-conduit,catalog=Catalog=http://forge-catalog,adoptions=Adoptions=http://forge-adoptions'
+
+# DEV — log into Forge via the aegis master realm (OIDC authorization-code +
+# PKCE). The issuer must resolve to aegis from BOTH the forge pod (server-side
+# discovery/token) and the browser (authorize redirect), and match the iss aegis
+# mints from the request Host. In this no-ingress kind setup that means using
+# the in-cluster name `forge-aegis` and making the browser resolve it too:
+#   1) /etc/hosts:  127.0.0.1 forge-aegis
+#   2) sudo kubectl port-forward svc/forge-aegis 80:80
+# See examples/petstore/VERIFY.md.
+oidcProviders: '[{"id":"aegis","name":"Aegis","issuer":"http://forge-aegis/realms/master","clientId":"forge","scopes":["openid","email","profile"]}]'
+
+resources:
+  requests: { cpu: 25m, memory: 128Mi }
+  limits: { cpu: '1', memory: 512Mi }
+
+gatewaySecret: dev-forge-gateway-secret

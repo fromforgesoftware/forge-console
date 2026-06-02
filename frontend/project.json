@@ -1,0 +1,41 @@
+{
+	"name": "@fromforgesoftware/forge",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"sourceRoot": "apps/forge/frontend/src",
+	"tags": ["scope:vue", "type:app"],
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"outputs": ["{projectRoot}/dist"],
+			"options": {
+				"cwd": "apps/forge/frontend",
+				"command": "vite build"
+			}
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "apps/forge/frontend",
+				"command": "vue-tsc -p tsconfig.json --noEmit"
+			}
+		},
+		"test": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "apps/forge/frontend",
+				"command": "vitest run --project=unit"
+			}
+		},
+		"serve": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "apps/forge/frontend",
+				"command": "vite"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

@@ -1,0 +1,56 @@
+nameOverride: ''
+fullnameOverride: ''
+replicaCount: 2
+# Cluster-read + maintenance-action RBAC for the platform topology feature.
+rbac:
+  create: true
+serviceAccount:
+  name: ''
+image:
+  repository: ghcr.io/fromforgesoftware/forge
+  pullPolicy: IfNotPresent
+  tag: ''
+ports:
+  http: 8080
+service:
+  type: ClusterIP
+  httpPort: 80
+
+# Forge owns its own Postgres schema for operators/sessions/products.
+database:
+  host: ''
+  port: '5432'
+  name: ''
+  schema: forge
+  ssl: require
+  logLevel: warn
+  existingSecret: ''
+  username: ''
+  password: ''
+
+# Pre-install/pre-upgrade migration job (runs /app/migrator).
+migrationJob:
+  enabled: true
+  backoffLimit: 3
+
+# External OIDC login providers, as a JSON array (empty = local password only):
+# [{"id","name","issuer","clientId","clientSecret","scopes":[...]}]. The IdP
+# must be reachable at one host by both the browser and this backend.
+oidcProviders: ''
+
+# First-user + app-registry seed (idempotent every boot). Disabled by
+# default; enable with credentials (and the app list) per environment.
+bootstrap:
+  enabled: false
+  adminEmail: ''
+  adminPassword: ''
+  adminName: Administrator
+  apps: '' # "slug=Name=adminBaseURL,slug2=Name2=url2"
+
+resources:
+  requests: { cpu: 25m, memory: 64Mi }
+  limits: { cpu: 500m, memory: 256Mi }
+
+# Shared HMAC secret gating /api admin routes to the Forge gateway
+# (empty = open). Must match across Forge and the products it manages.
+gatewaySecret: ''

@@ -1,0 +1,38 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"skipLibCheck": true,
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"noEmit": true,
+		"jsx": "preserve",
+		"strict": true,
+		"noImplicitAny": false,
+		"strictNullChecks": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"types": ["vite/client", "vitest/globals"],
+		"paths": {
+			"@/*": ["./src/*"],
+			"@fromforgesoftware/vue-kit": ["../../vue-kit/src/index.ts"],
+			"@fromforgesoftware/ts-kit": ["../../ts-kit/src/index.ts"],
+			"@fromforgesoftware/ts-kit/jsonapi-client": [
+				"../../ts-kit/src/jsonapi-client/index.ts"
+			],
+			"@fromforgesoftware/ts-kit/jsonapi": ["../../ts-kit/src/jsonapi/index.ts"],
+			"@fromforgesoftware/ts-kit/resource-state": [
+				"../../ts-kit/src/resource-state/index.ts"
+			],
+			"@fromforgesoftware/ts-kit/http": ["../../ts-kit/src/http/index.ts"],
+			"@fromforgesoftware/ts-kit/errors": ["../../ts-kit/src/errors/index.ts"],
+			"@fromforgesoftware/ts-kit/date": ["../../ts-kit/src/date/index.ts"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "env.d.ts"]
+}
