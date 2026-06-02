@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +16,7 @@ import (
 )
 
 // stubAppRepo captures the apps ensureApps upserts so we can assert the parsed
-// fields (notably the optional moduleUri 4th field).
+// fields (notably the derived moduleUri).
 type stubAppRepo struct {
 	upserted []app.App
 }
@@ -36,12 +38,55 @@ func (stubPerms) List(context.Context, ...search.Option) (resource.ListResponse[
 }
 func (stubPerms) Upsert(context.Context, app.Permission) error { return nil }
 
-func TestEnsureAppsParsesModuleURI(t *testing.T) {
+func TestLoadAppsConfigParsesInstallAndEnable(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "apps.yaml")
+	require.NoError(t, os.WriteFile(path, []byte(`install:
+  - id: aegis
+    bundle: "oci://ghcr.io/fromforgesoftware/aegis-console:0.1.0"
+  - id: talos
+    bundle: "oci://ghcr.io/fromforgesoftware/talos-console:0.1.0"
+enable:
+  - id: aegis
+    apiBase: "http://aegis"
+  - id: catalog
+    apiBase: "http://catalog"
+    name: "Catalog"
+`), 0o600))
+
+	cfg := loadAppsConfig(path)
+
+	require.Len(t, cfg.Install, 2)
+	require.Equal(t, "aegis", cfg.Install[0].ID)
+	require.Equal(t, "oci://ghcr.io/fromforgesoftware/aegis-console:0.1.0", cfg.Install[0].Bundle)
+	require.Equal(t, "talos", cfg.Install[1].ID)
+
+	require.Len(t, cfg.Enable, 2)
+	require.Equal(t, "aegis", cfg.Enable[0].ID)
+	require.Equal(t, "http://aegis", cfg.Enable[0].APIBase)
+	require.Equal(t, "catalog", cfg.Enable[1].ID)
+	require.Equal(t, "Catalog", cfg.Enable[1].Name)
+}
+
+func TestLoadAppsConfigMissingFileIsEmpty(t *testing.T) {
+	cfg := loadAppsConfig(filepath.Join(t.TempDir(), "does-not-exist.yaml"))
+	require.Empty(t, cfg.Install)
+	require.Empty(t, cfg.Enable)
+}
+
+func TestEnsureAppsDerivesModuleURI(t *testing.T) {
 	cfg := bootstrapConfig{
-		// aegis has the optional 4th field (moduleUri); catalog is a 3-field
-		// entry (no console remote) and must still parse.
-		apps: "aegis=Aegis=http://forge-aegis=http://forge-aegis/console/remoteEntry.js," +
-			"catalog=Catalog=http://forge-catalog",
+		apps: appsConfig{
+			// aegis is enabled AND installed → derived moduleUri.
+			// catalog is enabled only (no install bundle) → empty moduleUri.
+			Install: []installEntry{
+				{ID: "aegis", Bundle: "oci://ghcr.io/fromforgesoftware/aegis-console:0.1.0"},
+			},
+			Enable: []enableEntry{
+				{ID: "aegis", APIBase: "http://aegis"},
+				{ID: "catalog", APIBase: "http://catalog", Name: "Catalog"},
+			},
+		},
 	}
 	repo := &stubAppRepo{}
 
@@ -56,21 +101,27 @@ func TestEnsureAppsParsesModuleURI(t *testing.T) {
 
 	aegis := byslug["aegis"]
 	require.NotNil(t, aegis)
-	require.Equal(t, "Aegis", aegis.Name())
-	require.Equal(t, "http://forge-aegis", aegis.AdminBaseURL())
-	require.Equal(t, "http://forge-aegis/console/remoteEntry.js", aegis.ModuleURI())
+	require.Equal(t, "aegis", aegis.Name(), "name defaults from id when not set")
+	require.Equal(t, "http://aegis", aegis.AdminBaseURL())
+	require.True(t, aegis.Enabled())
+	require.Equal(t, "/public/plugins/aegis/module.js", aegis.ModuleURI(),
+		"enabled+installed app gets a derived moduleUri")
 
 	catalog := byslug["catalog"]
 	require.NotNil(t, catalog)
-	require.Equal(t, "http://forge-catalog", catalog.AdminBaseURL())
-	require.Empty(t, catalog.ModuleURI(), "3-field entry must have empty moduleUri")
+	require.Equal(t, "Catalog", catalog.Name())
+	require.Equal(t, "http://catalog", catalog.AdminBaseURL())
+	require.Empty(t, catalog.ModuleURI(), "enabled-only app has empty moduleUri")
 }
 
-func TestEnsureAppsSkipsMalformedEntries(t *testing.T) {
+func TestEnsureAppsSkipsEmptyID(t *testing.T) {
 	cfg := bootstrapConfig{
-		// Fewer than 3 fields is malformed and skipped; the valid entry still
-		// registers.
-		apps: "broken=OnlyTwo,talos=Talos=http://forge-talos=http://forge-talos/console/remoteEntry.js",
+		apps: appsConfig{
+			Enable: []enableEntry{
+				{ID: "", APIBase: "http://nowhere"},
+				{ID: "talos", APIBase: "http://talos"},
+			},
+		},
 	}
 	repo := &stubAppRepo{}
 
@@ -78,5 +129,4 @@ func TestEnsureAppsSkipsMalformedEntries(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, repo.upserted, 1)
 	require.Equal(t, "talos", repo.upserted[0].Slug())
-	require.Equal(t, "http://forge-talos/console/remoteEntry.js", repo.upserted[0].ModuleURI())
 }

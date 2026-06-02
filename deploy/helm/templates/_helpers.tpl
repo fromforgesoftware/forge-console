@@ -62,14 +62,16 @@ app.kubernetes.io/part-of: forge
   value: {{ .Values.bootstrap.adminPassword | quote }}
 - name: FOUNDRY_BOOTSTRAP_ADMIN_NAME
   value: {{ .Values.bootstrap.adminName | quote }}
-# FOUNDRY_APPS seeds the managed app registry. Each comma-separated entry is
-# slug=Name=adminBaseURL[=moduleUri]. adminBaseURL is the gateway-internal
-# admin API; moduleUri (optional 4th field) is the browser-reachable
-# Module-Federation remote (remoteEntry.js) the console loads at runtime — the
-# Grafana-equivalent of a plugin's module.js. Convention:
-# http://forge-<svc>/console/remoteEntry.js. Apps without a console remote omit it.
-- name: FOUNDRY_APPS
-  value: {{ .Values.bootstrap.apps | quote }}
+{{- end }}
+{{- if .Values.consoleApps.configMapName }}
+# The managed app registry is read from the forge-apps ConfigMap's apps.yaml
+# (install[]+enable[]). The server seeds enabled apps and derives moduleUri
+# (/public/plugins/<id>/module.js) for those also installed; the init-container
+# unpacks install bundles into FORGE_PLUGINS_DIR, served by the static route.
+- name: FORGE_APPS_CONFIG
+  value: {{ .Values.consoleApps.configPath | quote }}
+- name: FORGE_PLUGINS_DIR
+  value: {{ .Values.consoleApps.pluginsDir | quote }}
 {{- end }}
 - name: FOUNDRY_OIDC_PROVIDERS
   value: {{ .Values.oidcProviders | default "" | quote }}

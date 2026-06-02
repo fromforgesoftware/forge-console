@@ -15,6 +15,25 @@ spec:
         {{- include "forge.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "forge.serviceAccountName" . }}
+      {{- if .Values.consoleApps.configMapName }}
+      initContainers:
+        # Pull each console plugin bundle (an OCI artifact: a built SystemJS
+        # module.js + assets) and unpack it into the shared plugins volume at
+        # <pluginsDir>/<id>/. The forge server then serves them read-only at
+        # /public/plugins/<id>/module.js (Grafana-style).
+        {{- range .Values.consoleApps.install }}
+        - name: pull-plugin-{{ .id }}
+          image: {{ $.Values.consoleApps.orasImage | quote }}
+          args:
+            - pull
+            - {{ .bundle | trimPrefix "oci://" | quote }}
+            - -o
+            - {{ printf "%s/%s/" $.Values.consoleApps.pluginsDir .id | quote }}
+          volumeMounts:
+            - name: plugins
+              mountPath: {{ $.Values.consoleApps.pluginsDir | quote }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: forge
           image: {{ include "forge.image" . | quote }}
@@ -24,6 +43,15 @@ spec:
               containerPort: {{ .Values.ports.http }}
           env:
             {{- include "forge.env" . | nindent 12 }}
+          {{- if .Values.consoleApps.configMapName }}
+          volumeMounts:
+            - name: forge-apps
+              mountPath: {{ dir .Values.consoleApps.configPath | quote }}
+              readOnly: true
+            - name: plugins
+              mountPath: {{ .Values.consoleApps.pluginsDir | quote }}
+              readOnly: true
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /readyz
@@ -32,3 +60,15 @@ spec:
             periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.consoleApps.configMapName }}
+      volumes:
+        # The forge-apps ConfigMap (rendered by the umbrella) projects apps.yaml
+        # at <dir configPath>; the server reads it via FORGE_APPS_CONFIG.
+        - name: forge-apps
+          configMap:
+            name: {{ .Values.consoleApps.configMapName | quote }}
+        # Shared scratch the init-container unpacks bundles into and the server
+        # serves read-only.
+        - name: plugins
+          emptyDir: {}
+      {{- end }}

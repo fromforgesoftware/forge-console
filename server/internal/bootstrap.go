@@ -2,10 +2,12 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
 	"go.uber.org/fx"
+	"sigs.k8s.io/yaml"
 
 	"github.com/fromforgesoftware/go-kit/auth/password"
 	apierrors "github.com/fromforgesoftware/go-kit/errors"
@@ -14,13 +16,45 @@ import (
 	"github.com/fromforgesoftware/forge/server/internal/app"
 )
 
-// bootstrapConfig seeds the first user + the managed app registry from
-// the environment (Keycloak KEYCLOAK_ADMIN-style), idempotently every boot.
+const (
+	// defaultAppsConfigPath is where the forge-apps ConfigMap's apps.yaml is
+	// mounted by the Helm subchart.
+	defaultAppsConfigPath = "/etc/forge/apps.yaml"
+)
+
+// appsConfig is the parsed forge-apps ConfigMap (apps.yaml). It is the sole
+// app registry source — install[] lists the console plugin bundles fetched and
+// served by the init-container, enable[] drives GET /apps (visibility +
+// apiBase). moduleUri is DERIVED (not configured): an app that is both enabled
+// and installed serves its SystemJS module at /public/plugins/<id>/module.js.
+type appsConfig struct {
+	Install []installEntry `json:"install"`
+	Enable  []enableEntry  `json:"enable"`
+}
+
+// installEntry is a console plugin bundle the init-container pulls (oci://…).
+type installEntry struct {
+	ID     string `json:"id"`
+	Bundle string `json:"bundle"`
+}
+
+// enableEntry makes an app visible in GET /apps. apiBase is the gateway-internal
+// admin API; name is optional and defaults from the id.
+type enableEntry struct {
+	ID      string `json:"id"`
+	APIBase string `json:"apiBase"`
+	Name    string `json:"name"`
+}
+
+// bootstrapConfig seeds the first user + the managed app registry,
+// idempotently every boot. The admin user comes from the environment
+// (Keycloak KEYCLOAK_ADMIN-style); the app registry comes from the mounted
+// forge-apps ConfigMap (apps.yaml).
 type bootstrapConfig struct {
 	adminEmail    string
 	adminPassword string
 	adminName     string
-	apps          string // "slug=Name=adminBaseURL[=moduleUri],slug2=Name2=url2"
+	apps          appsConfig
 }
 
 func newBootstrapConfig() bootstrapConfig {
@@ -28,8 +62,23 @@ func newBootstrapConfig() bootstrapConfig {
 		adminEmail:    os.Getenv("FOUNDRY_BOOTSTRAP_ADMIN_EMAIL"),
 		adminPassword: os.Getenv("FOUNDRY_BOOTSTRAP_ADMIN_PASSWORD"),
 		adminName:     envOr("FOUNDRY_BOOTSTRAP_ADMIN_NAME", "Administrator"),
-		apps:          envOr("FOUNDRY_APPS", os.Getenv("FOUNDRY_PRODUCTS")),
+		apps:          loadAppsConfig(envOr("FORGE_APPS_CONFIG", defaultAppsConfigPath)),
 	}
+}
+
+// loadAppsConfig reads + parses the forge-apps ConfigMap apps.yaml. A missing
+// or empty file is not an error — the server still starts, just with no apps
+// (standalone subchart / no console.install).
+func loadAppsConfig(path string) appsConfig {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return appsConfig{}
+	}
+	var cfg appsConfig
+	if err := yaml.Unmarshal(raw, &cfg); err != nil {
+		return appsConfig{}
+	}
+	return cfg
 }
 
 func envOr(key, fallback string) string {
@@ -159,29 +208,34 @@ func ensureSuperadmin(ctx context.Context, roles app.RoleRepository, userID stri
 	return nil
 }
 
+// ensureApps seeds the registry from the forge-apps ConfigMap's enable[] list.
+// Each enabled app's moduleUri is DERIVED: an app that is also installed (has
+// an install[] bundle) serves its SystemJS module at
+// /public/plugins/<id>/module.js (the init-container unpacks it there);
+// enabled-but-not-installed apps get an empty moduleUri so the console falls
+// back to a bundled module.
 func ensureApps(ctx context.Context, cfg bootstrapConfig, apps app.AppRepository, perms app.PermissionRepository, log logger.Logger) error {
-	for _, entry := range strings.Split(cfg.apps, ",") {
-		entry = strings.TrimSpace(entry)
-		if entry == "" {
+	installed := map[string]bool{}
+	for _, in := range cfg.apps.Install {
+		if id := strings.TrimSpace(in.ID); id != "" {
+			installed[id] = true
+		}
+	}
+	for _, en := range cfg.apps.Enable {
+		id := strings.TrimSpace(en.ID)
+		if id == "" {
+			log.Warn("bootstrap skipping enable entry with empty id")
 			continue
 		}
-		// Entry is slug=Name=adminBaseURL[=moduleUri]. The 4th field
-		// (moduleUri, the browser-reachable Module-Federation remote) is
-		// optional — 3-field entries without a console remote stay valid.
-		parts := strings.SplitN(entry, "=", 4)
-		if len(parts) < 3 {
-			log.Warn("bootstrap skipping malformed FOUNDRY_APPS entry", "entry", entry)
-			continue
+		name := strings.TrimSpace(en.Name)
+		if name == "" {
+			name = id
 		}
-		moduleURI := ""
-		if len(parts) == 4 {
-			moduleURI = parts[3]
-		}
-		a := app.NewApp(parts[0],
-			app.WithAppName(parts[1]),
-			app.WithAppKind(parts[0]),
-			app.WithAppAdminBaseURL(parts[2]),
-			app.WithAppModuleURI(moduleURI),
+		a := app.NewApp(id,
+			app.WithAppName(name),
+			app.WithAppKind(id),
+			app.WithAppAdminBaseURL(strings.TrimSpace(en.APIBase)),
+			app.WithAppModuleURI(deriveModuleURI(id, installed[id])),
 			app.WithAppEnabled(true),
 		)
 		if err := apps.Upsert(ctx, a); err != nil {
@@ -193,6 +247,17 @@ func ensureApps(ctx context.Context, cfg bootstrapConfig, apps app.AppRepository
 		log.Info("bootstrap registered app", "slug", a.Slug(), "adminBaseURL", a.AdminBaseURL(), "moduleUri", a.ModuleURI())
 	}
 	return nil
+}
+
+// deriveModuleURI returns the browser-reachable SystemJS module path for an app
+// that is both enabled and installed — the forge server serves the unpacked
+// bundle there (Grafana-style). Not installed → empty (host falls back to a
+// bundled module).
+func deriveModuleURI(id string, installed bool) string {
+	if !installed {
+		return ""
+	}
+	return fmt.Sprintf("/public/plugins/%s/module.js", id)
 }
 
 // ensureAppPermissions seeds the per-app read/write permissions so the role

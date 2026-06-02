@@ -114,6 +114,7 @@ func transportFxModule() fx.Option {
 		kitrest.NewFxController(foundryhttp.NewGatewayController),
 		kitrest.NewFxController(foundryhttp.NewTopologyController),
 		kitrest.NewFxController(foundryhttp.NewPlatformStreamController),
+		kitrest.NewFxController(foundryhttp.NewPluginsController),
 		kitrest.NewFxController(foundryhttp.NewSPAController),
 	)
 }

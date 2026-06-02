@@ -38,14 +38,36 @@ migrationJob:
 # must be reachable at one host by both the browser and this backend.
 oidcProviders: ''
 
-# First-user + app-registry seed (idempotent every boot). Disabled by
-# default; enable with credentials (and the app list) per environment.
+# First-user seed (idempotent every boot). Disabled by default; enable with
+# credentials per environment. The app registry no longer comes from here — it
+# is read from the forge-apps ConfigMap (see consoleApps below).
 bootstrap:
   enabled: false
   adminEmail: ''
   adminPassword: ''
   adminName: Administrator
-  apps: '' # "slug=Name=adminBaseURL,slug2=Name2=url2"
+
+# Console plugin registry (Grafana-style). The umbrella renders the `forge-apps`
+# ConfigMap from console.install/enable and wires these values into the subchart.
+# The server reads apps.yaml from the mounted ConfigMap (FORGE_APPS_CONFIG);
+# an init-container pulls each install[].bundle (an OCI artifact with a built
+# SystemJS module.js + assets) into the shared plugins volume (FORGE_PLUGINS_DIR),
+# which the server serves at /public/plugins/<id>/module.js.
+#
+# Standalone subchart: configMapName empty + install empty → no ConfigMap mount,
+# no init-container; the server still starts with no apps.
+consoleApps:
+  # Name of the forge-apps ConfigMap (defined by the umbrella). Empty → not
+  # mounted (degrades gracefully when run standalone).
+  configMapName: ''
+  # Mirror of console.install[] ({id, bundle}); drives the oras init-container.
+  install: []
+  # oras CLI image used by the init-container to pull install bundles.
+  orasImage: ghcr.io/oras-project/oras:v1.2.0
+  # Mount path for the ConfigMap apps.yaml + shared plugins dir (must match the
+  # server defaults FORGE_APPS_CONFIG / FORGE_PLUGINS_DIR).
+  configPath: /etc/forge/apps.yaml
+  pluginsDir: /var/lib/forge/plugins
 
 resources:
   requests: { cpu: 25m, memory: 64Mi }
