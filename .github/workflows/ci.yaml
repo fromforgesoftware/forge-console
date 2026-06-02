@@ -22,6 +22,9 @@ jobs:
           go test ./...
   frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     defaults:
       run:
         working-directory: frontend
@@ -38,7 +41,14 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+          # @fromforgesoftware/* are published to GitHub Packages, which requires
+          # auth even for public packages; scope only that org so other deps still
+          # come from the default npm registry.
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@fromforgesoftware'
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: type-check (vue-tsc, published kit)
         run: npx vue-tsc -p tsconfig.ci.json --noEmit
       - name: unit tests (vitest)
