@@ -1,47 +1,18 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
-import federation from '@originjs/vite-plugin-federation';
 
-// Module-Federation HOST. The console exposes nothing itself; it loads app
-// plugin remotes at runtime (see src/.../console/application/runtime.ts).
-// remotes is left empty here because remotes are discovered from /apps and
-// registered dynamically — only `shared` matters at build time.
-//
-// `shared` pins every cross-boundary library as a SINGLETON whose
-// requiredVersion is read straight from this host's package.json. That makes a
-// remote reuse the host's already-loaded Vue/router/pinia/kits (the Grafana
-// import-map equivalent) instead of bundling a second copy — two Vues or two
-// pinias would silently break reactivity, the active router, and the store
-// graph. Reading the version from package.json guarantees it can never drift
-// from what we install.
-const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8')) as {
-	dependencies: Record<string, string>;
-};
-
-const singleton = (name: string) => ({
-	[name]: { singleton: true, requiredVersion: pkg.dependencies[name] },
-});
-
-const federationShared = {
-	...singleton('vue'),
-	...singleton('vue-router'),
-	...singleton('pinia'),
-	...singleton('@fromforgesoftware/ts-kit'),
-	// jsonapi-client is the only ts-kit subpath the host actually imports; share
-	// it explicitly so a remote importing the same subpath dedupes to the host
-	// copy rather than treating the deep path as a distinct module.
-	'@fromforgesoftware/ts-kit/jsonapi-client': {
-		singleton: true,
-		requiredVersion: pkg.dependencies['@fromforgesoftware/ts-kit'],
-	},
-	...singleton('@fromforgesoftware/vue-kit'),
-	...singleton('@fromforgesoftware/forge-console-plugin'),
-};
+// SystemJS plugin HOST (Grafana-style). The console exposes nothing itself; it
+// loads each app's runtime plugin module.js at runtime via SystemJS (see
+// src/.../console/application/system.ts + runtime.ts). There is NO Module
+// Federation and no build-time `shared` map: singleton sharing happens at
+// RUNTIME — the host registers its own vue/router/pinia/kit/contract instances
+// in a SystemJS import map at bootstrap, and a plugin's externalised imports
+// resolve to those host instances. So this build is an ordinary Vite app build.
 
 const tsKit = (sub: string) => resolve(__dirname, `../../ts-kit/src/${sub}`);
 const consolePlugin = (sub: string) =>
@@ -84,22 +55,19 @@ const consolePluginAliases = useConsolePluginSource
 	: {};
 
 export default defineConfig({
-	plugins: [
-		vue(),
-		tailwindcss(),
-		federation({
-			name: 'forge_host',
-			// Remotes are registered at runtime from /apps, so none are listed
-			// statically. The empty map still makes this build a federation host
-			// and emits the `virtual:__federation__` dynamic-remote runtime the
-			// loader uses (__federation_method_setRemote / getRemote).
-			remotes: {},
-			shared: federationShared,
-		}),
-	],
-	// vite-plugin-federation requires a target that supports top-level await for
-	// its shared-module runtime; the default esnext target satisfies this.
-	build: { target: 'esnext' },
+	plugins: [vue(), tailwindcss()],
+	// The runtime SystemJS host (system.ts) registers the host's own vue-kit /
+	// console-plugin namespaces as shared singletons, so any code path that loads
+	// it (the app, and tests that import the registry transitively) pulls the
+	// FULL sibling-source barrels — including vue-kit chart components' `.svg?url`
+	// assets, which live outside this project's root. Allow the sibling kit
+	// checkouts (workspace root) so Vite's fs guard transforms those assets rather
+	// than denying them. No effect when resolving the published packages.
+	server: {
+		fs: {
+			allow: [resolve(__dirname, '..', '..')],
+		},
+	},
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),

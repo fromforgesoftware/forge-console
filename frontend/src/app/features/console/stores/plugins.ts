@@ -5,10 +5,10 @@ import { resolvePlugins } from '@/app/features/console/application/registry';
 import { useAppsStore } from './apps';
 
 // usePluginsStore holds the ACTIVE console plugin set — the hybrid result of
-// resolvePlugins over the live /apps list (runtime MF remote where available,
-// bundled plugin otherwise). The nav, dashboard, and lazy route-loader all read
-// from here so the moment an app migrates to a remote (4d/4e) the whole console
-// follows with no host edits.
+// resolvePlugins over the live /apps list (runtime SystemJS plugin module where
+// available, bundled plugin otherwise). The nav, dashboard, and lazy
+// route-loader all read from here so the moment an app migrates to a plugin
+// module (4d/4e) the whole console follows with no host edits.
 //
 // Resolution is LAZY per Grafana's model: nav renders from /apps metadata
 // immediately; a remote plugin's code resolves on first navigation into its

@@ -4,13 +4,13 @@ import { many } from '@/app/core/http/api';
 
 // AppInfo is a managed app the backend reports as enabled. Drives which
 // console plugins appear — "Forge + Talos only" simply omits the rest.
-// moduleUri (4b) is the URL of the app's Module-Federation plugin remote, when
-// it has migrated to one; empty means "use the compile-time bundled plugin".
+// moduleUri (4b) is the URL of the app's SystemJS plugin module.js, when it has
+// migrated to one; empty means "use the compile-time bundled plugin".
 export interface AppInfo {
 	slug: string;
 	name: string;
 	kind: string;
-	/** MF remoteEntry URL exposing `./plugin`, or '' for bundled plugins. */
+	/** URL of the app's SystemJS plugin module.js, or '' for bundled plugins. */
 	moduleUri: string;
 }
 
