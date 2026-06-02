@@ -1,0 +1,13 @@
+{
+	// CI / published-package type-check. Extends the dev tsconfig but drops the
+	// sibling ts-kit/vue-kit source path mappings so types resolve against the
+	// published @fromforgesoftware/*-kit packages pinned in package.json (the
+	// versions production ships), exactly as vite.config.ts does when the
+	// sibling source is absent. This is what catches SPA-vs-published-kit skew.
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	}
+}

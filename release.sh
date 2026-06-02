@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # release.sh vX.Y.Z — cut a release. Blocks unless CI is green on HEAD.
-# Creating the GitHub release triggers the publish workflow (npm → GitHub Packages).
+# Creating the GitHub release triggers the publish workflow (.github/workflows/release.yaml):
+# Docker image → ghcr.io and Helm chart → ghcr.io OCI registry.
 set -euo pipefail
 V="${1:?usage: ./release.sh vX.Y.Z}"
 [[ "$V" == v*.*.* ]] || { echo "✗ version must look like v0.1.0"; exit 1; }

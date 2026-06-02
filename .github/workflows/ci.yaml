@@ -8,19 +8,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: forge
-      - uses: actions/checkout@v4
-        with:
-          repository: fromforgesoftware/go-kit
-          path: go-kit
       - uses: actions/setup-go@v5
         with:
-          go-version-file: forge/server/go.mod
-      - name: server build + vet + test (go-kit via workspace)
+          go-version-file: server/go.mod
+      # Build against the published go-kit version pinned in go.mod (v0.1.0),
+      # not a sibling checkout via go.work — a workspace would silently mask
+      # version skew between the SPA/server and the released go-kit.
+      - name: server build + vet + test
         run: |
-          cd forge/server
-          go work init . ../../go-kit
+          cd server
           go build ./...
           go vet ./...
           go test ./...
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # No sibling ts-kit/vue-kit checkout in CI: resolve the published
+      # @fromforgesoftware/*-kit packages pinned in package.json (the versions
+      # production ships), so this job catches SPA-vs-published-kit skew — the
+      # class of bug the Phase-1 console rename could introduce.
+      FORGE_USE_PUBLISHED_KIT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: type-check (vue-tsc, published kit)
+        run: npx vue-tsc -p tsconfig.ci.json --noEmit
+      - name: unit tests (vitest)
+        run: npm test
+      - name: build (vite)
+        run: npx vite build

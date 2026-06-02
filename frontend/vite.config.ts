@@ -1,17 +1,24 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 
 const tsKit = (sub: string) => resolve(__dirname, `../../ts-kit/src/${sub}`);
 
-export default defineConfig({
-	plugins: [vue(), tailwindcss()],
-	resolve: {
-		alias: {
-			'@': fileURLToPath(new URL('./src', import.meta.url)),
+// Local dev links the sibling ts-kit/vue-kit source checkouts so changes there
+// are picked up live. CI (and any consumer without those checkouts) instead
+// resolves the published @fromforgesoftware/*-kit packages pinned in
+// package.json — the same versions production ships. Auto-detect via the
+// presence of the sibling source so both paths work with no extra config.
+const useKitSource =
+	process.env.FORGE_USE_PUBLISHED_KIT !== '1' &&
+	existsSync(resolve(__dirname, '../../ts-kit/src/index.ts'));
+
+const kitAliases = useKitSource
+	? {
 			'@fromforgesoftware/ts-kit/jsonapi-client': tsKit('jsonapi-client/index.ts'),
 			'@fromforgesoftware/ts-kit/jsonapi': tsKit('jsonapi/index.ts'),
 			'@fromforgesoftware/ts-kit/resource-state': tsKit('resource-state/index.ts'),
@@ -20,6 +27,15 @@ export default defineConfig({
 			'@fromforgesoftware/ts-kit/date': tsKit('date/index.ts'),
 			'@fromforgesoftware/ts-kit': tsKit('index.ts'),
 			'@fromforgesoftware/vue-kit': resolve(__dirname, '../../vue-kit/src/index.ts'),
+		}
+	: {};
+
+export default defineConfig({
+	plugins: [vue(), tailwindcss()],
+	resolve: {
+		alias: {
+			'@': fileURLToPath(new URL('./src', import.meta.url)),
+			...kitAliases,
 		},
 	},
 	test: {
@@ -27,5 +43,13 @@ export default defineConfig({
 		include: ['src/**/*.test.ts'],
 		environment: 'jsdom',
 		globals: true,
+		server: {
+			// When resolving against the published packages (CI / no sibling
+			// source), inline the kits so Vite's resolver transforms them rather
+			// than handing them to Node's stricter native-ESM loader.
+			deps: {
+				inline: [/@fromforgesoftware\/(ts|vue)-kit/],
+			},
+		},
 	},
 });

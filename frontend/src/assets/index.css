@@ -1,3 +1,2 @@
-@import '../../../../../libs/vue-kit/src/styles/globals.css';
-@source '../../../../../libs/vue-kit/src';
+@import '@fromforgesoftware/vue-kit/style.css';
 @source './';

@@ -61,7 +61,7 @@ function resubscribe() {
 	rows.value = [];
 	if (status.value !== 'OPEN') return;
 	send(unsubscribeMessage(SUB_ID));
-	send(subscribeMessage(SUB_ID, filter.value, replayFrom.value));
+	send(subscribeMessage(SUB_ID, filter.value, replayFromISO.value));
 }
 
 // Re-subscribe when the panel's filter changes.
