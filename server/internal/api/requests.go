@@ -45,12 +45,14 @@ type AppUpsertDTO struct {
 	RName         string `jsonapi:"attr,name"`
 	RKind         string `jsonapi:"attr,kind"`
 	RAdminBaseURL string `jsonapi:"attr,adminBaseURL"`
+	RModuleURI    string `jsonapi:"attr,moduleUri"`
 	REnabled      bool   `jsonapi:"attr,enabled"`
 }
 
 func (d *AppUpsertDTO) Name() string         { return d.RName }
 func (d *AppUpsertDTO) Kind() string         { return d.RKind }
 func (d *AppUpsertDTO) AdminBaseURL() string { return d.RAdminBaseURL }
+func (d *AppUpsertDTO) ModuleURI() string    { return d.RModuleURI }
 func (d *AppUpsertDTO) Enabled() bool        { return d.REnabled }
 
 // ServiceAccountCreateDTO is the JSON:API request body for creating a service

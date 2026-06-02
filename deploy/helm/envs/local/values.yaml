@@ -16,7 +16,15 @@ bootstrap:
   adminEmail: admin@forge.local
   adminPassword: admin1234
   adminName: Administrator
-  apps: 'aegis=Aegis=http://forge-aegis,talos=Talos=http://forge-talos,gjallarhorn=Gjallarhorn=http://forge-gjallarhorn,gleipnir=Gleipnir=http://forge-gleipnir,catalog=Catalog=http://forge-catalog,adoptions=Adoptions=http://forge-adoptions'
+  # Each entry is slug=Name=adminBaseURL[=moduleUri]. adminBaseURL is the
+  # gateway-internal admin API; the optional 4th field moduleUri is the
+  # browser-reachable Module-Federation remote (remoteEntry.js) the console
+  # loads at runtime — the Grafana-equivalent of a plugin's module.js.
+  # Convention: http://forge-<svc>/console/remoteEntry.js (each app's own svc
+  # serves its console remote; the upcoming per-app remotes wire in here).
+  # talos/gjallarhorn/gleipnir/aegis ship a console remote; catalog/adoptions
+  # have none yet so they omit moduleUri.
+  apps: 'aegis=Aegis=http://forge-aegis=http://forge-aegis/console/remoteEntry.js,talos=Talos=http://forge-talos=http://forge-talos/console/remoteEntry.js,gjallarhorn=Gjallarhorn=http://forge-gjallarhorn=http://forge-gjallarhorn/console/remoteEntry.js,gleipnir=Gleipnir=http://forge-gleipnir=http://forge-gleipnir/console/remoteEntry.js,catalog=Catalog=http://forge-catalog,adoptions=Adoptions=http://forge-adoptions'
 
 # DEV — log into Forge via the aegis master realm (OIDC authorization-code +
 # PKCE). The issuer must resolve to aegis from BOTH the forge pod (server-side

@@ -126,6 +126,7 @@ func decodeUpsertApp(req *http.Request) (app.UpsertAppCommand, error) {
 		Name:         body.Name(),
 		Kind:         body.Kind(),
 		AdminBaseURL: body.AdminBaseURL(),
+		ModuleURI:    body.ModuleURI(),
 		Enabled:      body.Enabled(),
 	}, nil
 }

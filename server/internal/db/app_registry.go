@@ -20,6 +20,7 @@ var appFieldMapping = map[string]string{
 	"name":         "name",
 	"kind":         "kind",
 	"adminBaseURL": "admin_base_url",
+	"moduleUri":    "module_uri",
 	"enabled":      "enabled",
 }
 
@@ -30,6 +31,7 @@ type appEntity struct {
 	EName         string    `gorm:"column:name"`
 	EKind         string    `gorm:"column:kind"`
 	EAdminBaseURL string    `gorm:"column:admin_base_url"`
+	EModuleURI    string    `gorm:"column:module_uri"`
 	EEnabled      bool      `gorm:"column:enabled"`
 }
 
@@ -44,6 +46,7 @@ func (e *appEntity) Slug() string          { return e.ESlug }
 func (e *appEntity) Name() string          { return e.EName }
 func (e *appEntity) Kind() string          { return e.EKind }
 func (e *appEntity) AdminBaseURL() string  { return e.EAdminBaseURL }
+func (e *appEntity) ModuleURI() string     { return e.EModuleURI }
 func (e *appEntity) Enabled() bool         { return e.EEnabled }
 
 type appRepo struct{ *postgres.Repo }
@@ -81,13 +84,13 @@ func (r *appRepo) List(ctx context.Context, opts ...search.Option) (resource.Lis
 
 func (r *appRepo) Upsert(ctx context.Context, a app.App) error {
 	res := r.DB.WithContext(ctx).Exec(
-		`INSERT INTO foundry.app (slug, name, kind, admin_base_url, enabled)
-		 VALUES (?, ?, ?, ?, ?)
+		`INSERT INTO foundry.app (slug, name, kind, admin_base_url, module_uri, enabled)
+		 VALUES (?, ?, ?, ?, NULLIF(?, ''), ?)
 		 ON CONFLICT (slug) DO UPDATE SET
 		   name = EXCLUDED.name, kind = EXCLUDED.kind,
-		   admin_base_url = EXCLUDED.admin_base_url, enabled = EXCLUDED.enabled,
-		   updated_at = now()`,
-		a.Slug(), a.Name(), a.Kind(), a.AdminBaseURL(), a.Enabled(),
+		   admin_base_url = EXCLUDED.admin_base_url, module_uri = EXCLUDED.module_uri,
+		   enabled = EXCLUDED.enabled, updated_at = now()`,
+		a.Slug(), a.Name(), a.Kind(), a.AdminBaseURL(), a.ModuleURI(), a.Enabled(),
 	)
 	if res.Error != nil {
 		return postgres.NewErrUnknown(res.Error)

@@ -17,13 +17,16 @@ const ResourceTypeApp resource.Type = "apps"
 
 // App is a managed forge app (Aegis, Hallmark, Herald) the console
 // administers. AdminBaseURL is the in-cluster admin API the gateway proxies to.
-// The slug is the resource id.
+// ModuleURI is the browser-reachable Module-Federation remote (remoteEntry.js)
+// the console loads at runtime — the Grafana-equivalent of a plugin's
+// module.js. The slug is the resource id.
 type App interface {
 	resource.Resource
 	Slug() string
 	Name() string
 	Kind() string
 	AdminBaseURL() string
+	ModuleURI() string
 	Enabled() bool
 }
 
@@ -33,6 +36,7 @@ type appRes struct {
 	name         string
 	kind         string
 	adminBaseURL string
+	moduleURI    string
 	enabled      bool
 }
 
@@ -41,6 +45,7 @@ type AppOption func(*appRes)
 func WithAppName(name string) AppOption        { return func(a *appRes) { a.name = name } }
 func WithAppKind(kind string) AppOption        { return func(a *appRes) { a.kind = kind } }
 func WithAppAdminBaseURL(url string) AppOption { return func(a *appRes) { a.adminBaseURL = url } }
+func WithAppModuleURI(uri string) AppOption    { return func(a *appRes) { a.moduleURI = uri } }
 func WithAppEnabled(enabled bool) AppOption    { return func(a *appRes) { a.enabled = enabled } }
 
 // NewApp builds an App aggregate keyed by slug.
@@ -58,6 +63,7 @@ func (a *appRes) Slug() string         { return a.ID() }
 func (a *appRes) Name() string         { return a.name }
 func (a *appRes) Kind() string         { return a.kind }
 func (a *appRes) AdminBaseURL() string { return a.adminBaseURL }
+func (a *appRes) ModuleURI() string    { return a.moduleURI }
 func (a *appRes) Enabled() bool        { return a.enabled }
 
 // AppRepository persists the app registry via the kit generic surface plus an
@@ -110,6 +116,7 @@ type UpsertAppCommand struct {
 	Name         string
 	Kind         string
 	AdminBaseURL string
+	ModuleURI    string
 	Enabled      bool
 }
 
@@ -144,6 +151,7 @@ func (uc *appAdminUsecase) Upsert(ctx context.Context, cmd UpsertAppCommand) (Ap
 		WithAppName(cmd.Name),
 		WithAppKind(cmd.Kind),
 		WithAppAdminBaseURL(cmd.AdminBaseURL),
+		WithAppModuleURI(cmd.ModuleURI),
 		WithAppEnabled(cmd.Enabled),
 	)
 	if err := uc.apps.Upsert(ctx, a); err != nil {

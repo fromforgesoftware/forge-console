@@ -20,7 +20,7 @@ type bootstrapConfig struct {
 	adminEmail    string
 	adminPassword string
 	adminName     string
-	apps          string // "slug=Name=adminBaseURL,slug2=Name2=url2"
+	apps          string // "slug=Name=adminBaseURL[=moduleUri],slug2=Name2=url2"
 }
 
 func newBootstrapConfig() bootstrapConfig {
@@ -165,15 +165,23 @@ func ensureApps(ctx context.Context, cfg bootstrapConfig, apps app.AppRepository
 		if entry == "" {
 			continue
 		}
-		parts := strings.SplitN(entry, "=", 3)
-		if len(parts) != 3 {
+		// Entry is slug=Name=adminBaseURL[=moduleUri]. The 4th field
+		// (moduleUri, the browser-reachable Module-Federation remote) is
+		// optional — 3-field entries without a console remote stay valid.
+		parts := strings.SplitN(entry, "=", 4)
+		if len(parts) < 3 {
 			log.Warn("bootstrap skipping malformed FOUNDRY_APPS entry", "entry", entry)
 			continue
+		}
+		moduleURI := ""
+		if len(parts) == 4 {
+			moduleURI = parts[3]
 		}
 		a := app.NewApp(parts[0],
 			app.WithAppName(parts[1]),
 			app.WithAppKind(parts[0]),
 			app.WithAppAdminBaseURL(parts[2]),
+			app.WithAppModuleURI(moduleURI),
 			app.WithAppEnabled(true),
 		)
 		if err := apps.Upsert(ctx, a); err != nil {
@@ -182,7 +190,7 @@ func ensureApps(ctx context.Context, cfg bootstrapConfig, apps app.AppRepository
 		if err := ensureAppPermissions(ctx, perms, a.Slug()); err != nil {
 			return err
 		}
-		log.Info("bootstrap registered app", "slug", a.Slug(), "adminBaseURL", a.AdminBaseURL())
+		log.Info("bootstrap registered app", "slug", a.Slug(), "adminBaseURL", a.AdminBaseURL(), "moduleUri", a.ModuleURI())
 	}
 	return nil
 }
