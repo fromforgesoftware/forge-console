@@ -9,14 +9,14 @@ describe('auditStreamURL', () => {
 	});
 
 	it('switches https→wss', () => {
-		expect(auditStreamURL('https://hallmark.example.com')).toBe(
-			'wss://hallmark.example.com/api/audit-events/stream',
+		expect(auditStreamURL('https://talos.example.com')).toBe(
+			'wss://talos.example.com/api/audit-events/stream',
 		);
 	});
 
 	it('resolves a relative apiBase against the origin', () => {
-		expect(auditStreamURL('/__services/hallmark', 'https://console.example.com')).toBe(
-			'wss://console.example.com/__services/hallmark/api/audit-events/stream',
+		expect(auditStreamURL('/__services/talos', 'https://console.example.com')).toBe(
+			'wss://console.example.com/__services/talos/api/audit-events/stream',
 		);
 	});
 });

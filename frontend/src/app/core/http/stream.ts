@@ -1,5 +1,5 @@
 // WebSocket helpers for the live audit tail. The console opens one socket to
-// Hallmark's /api/audit-events/stream and multiplexes any number of filtered
+// Talos's /api/audit-events/stream and multiplexes any number of filtered
 // subscriptions over it using the kit's Message envelope: a `subscribe` message
 // (its id naming the subscription) opens a feed, and the server pushes
 // `message` frames tagged with that id so each panel routes its own events.

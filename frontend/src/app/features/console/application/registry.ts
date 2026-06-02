@@ -1,9 +1,9 @@
 import type { RouteRecordRaw } from 'vue-router';
 import type { ForgeConsolePlugin } from '../domain/plugin';
 import { aegisPlugin } from '../plugins/aegis';
-import { conduitPlugin } from '../plugins/conduit';
-import { hallmarkPlugin } from '../plugins/hallmark';
-import { heraldPlugin } from '../plugins/herald';
+import { gleipnirPlugin } from '../plugins/gleipnir';
+import { talosPlugin } from '../plugins/talos';
+import { gjallarhornPlugin } from '../plugins/gjallarhorn';
 
 // Compile-time plugin registry: every first-party console plugin is listed
 // here (no runtime federation in v1). Adding a service = dropping a manifest
@@ -11,9 +11,9 @@ import { heraldPlugin } from '../plugins/herald';
 // sidebar, dashboard, and command palette need no per-service edits.
 export const plugins: ForgeConsolePlugin[] = [
 	aegisPlugin(),
-	hallmarkPlugin(),
-	heraldPlugin(),
-	conduitPlugin(),
+	talosPlugin(),
+	gjallarhornPlugin(),
+	gleipnirPlugin(),
 ].sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
 
 // enabledPlugins filters the registry to the apps the backend reports as

@@ -16,7 +16,7 @@ bootstrap:
   adminEmail: admin@forge.local
   adminPassword: admin1234
   adminName: Administrator
-  apps: 'aegis=Aegis=http://forge-aegis,hallmark=Hallmark=http://forge-hallmark,herald=Herald=http://forge-herald,conduit=Conduit=http://forge-conduit,catalog=Catalog=http://forge-catalog,adoptions=Adoptions=http://forge-adoptions'
+  apps: 'aegis=Aegis=http://forge-aegis,talos=Talos=http://forge-talos,gjallarhorn=Gjallarhorn=http://forge-gjallarhorn,gleipnir=Gleipnir=http://forge-gleipnir,catalog=Catalog=http://forge-catalog,adoptions=Adoptions=http://forge-adoptions'
 
 # DEV — log into Forge via the aegis master realm (OIDC authorization-code +
 # PKCE). The issuer must resolve to aegis from BOTH the forge pod (server-side

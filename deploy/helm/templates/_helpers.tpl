@@ -1,30 +1,30 @@
-{{- define "foundry.name" -}}{{ default .Chart.Name .Values.nameOverride }}{{- end -}}
-{{- define "foundry.fullname" -}}{{- if .Values.fullnameOverride -}}{{ .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}{{- else -}}{{ printf "%s-%s" .Release.Name (include "foundry.name" .) | trunc 63 | trimSuffix "-" }}{{- end -}}{{- end -}}
+{{- define "forge.name" -}}{{ default .Chart.Name .Values.nameOverride }}{{- end -}}
+{{- define "forge.fullname" -}}{{- if .Values.fullnameOverride -}}{{ .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}{{- else -}}{{ printf "%s-%s" .Release.Name (include "forge.name" .) | trunc 63 | trimSuffix "-" }}{{- end -}}{{- end -}}
 
-{{- define "foundry.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "foundry.name" . }}
+{{- define "forge.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "forge.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{- define "foundry.labels" -}}
-{{ include "foundry.selectorLabels" . }}
+{{- define "forge.labels" -}}
+{{ include "forge.selectorLabels" . }}
 app.kubernetes.io/part-of: forge
 {{- end -}}
 
-{{- define "foundry.image" -}}{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}{{- end -}}
+{{- define "forge.image" -}}{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}{{- end -}}
 
-{{- define "foundry.serviceAccountName" -}}
-{{- default (include "foundry.fullname" .) .Values.serviceAccount.name -}}
+{{- define "forge.serviceAccountName" -}}
+{{- default (include "forge.fullname" .) .Values.serviceAccount.name -}}
 {{- end -}}
 
-{{- define "foundry.dbSecretName" -}}
-{{- if .Values.database.existingSecret -}}{{ .Values.database.existingSecret }}{{- else -}}{{ printf "%s-db" (include "foundry.fullname" .) }}{{- end -}}
+{{- define "forge.dbSecretName" -}}
+{{- if .Values.database.existingSecret -}}{{ .Values.database.existingSecret }}{{- else -}}{{ printf "%s-db" (include "forge.fullname" .) }}{{- end -}}
 {{- end -}}
 
 {{/* Shared env for server + migrator. */}}
-{{- define "foundry.env" -}}
+{{- define "forge.env" -}}
 - name: SVC_NAME
-  value: {{ include "foundry.name" . | quote }}
+  value: {{ include "forge.name" . | quote }}
 - name: REST_ADDRESS
   value: ":{{ .Values.ports.http }}"
 - name: HTTP_ADDRESS
@@ -48,12 +48,12 @@ app.kubernetes.io/part-of: forge
 - name: DB_USER
   valueFrom:
     secretKeyRef:
-      name: {{ include "foundry.dbSecretName" . }}
+      name: {{ include "forge.dbSecretName" . }}
       key: DB_USER
 - name: DB_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ include "foundry.dbSecretName" . }}
+      name: {{ include "forge.dbSecretName" . }}
       key: DB_PASSWORD
 {{- if .Values.bootstrap.enabled }}
 - name: FOUNDRY_BOOTSTRAP_ADMIN_EMAIL

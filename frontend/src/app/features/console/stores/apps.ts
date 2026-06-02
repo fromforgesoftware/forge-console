@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { many } from '@/app/core/http/api';
 
 // AppInfo is a managed app the backend reports as enabled. Drives which
-// console plugins appear — "Forge + Hallmark only" simply omits the rest.
+// console plugins appear — "Forge + Talos only" simply omits the rest.
 export interface AppInfo {
 	slug: string;
 	name: string;

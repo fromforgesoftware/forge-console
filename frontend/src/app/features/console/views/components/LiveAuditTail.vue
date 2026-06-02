@@ -21,7 +21,7 @@ import {
 	type AuditFrame,
 } from '@/app/core/http/stream';
 
-// Live audit tail backed by Hallmark's multiplexed WebSocket stream. One socket
+// Live audit tail backed by Talos's multiplexed WebSocket stream. One socket
 // (vue-kit's @vueuse useWebSocket, with auto-reconnect) carries a named
 // subscription; the server tags frames with that id so this panel only renders
 // its own events. Frames are prepended newest-first and capped.

@@ -4,15 +4,15 @@ import { apiBaseFor } from '@/app/core/http/services';
 import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
 import LiveAuditTail from '@/app/features/console/views/components/LiveAuditTail.vue';
 
-// The Hallmark console plugin: the audit timeline over Hallmark's read-only
-// JSON:API, plus the live tail over Hallmark's WebSocket stream
+// The Talos console plugin: the audit timeline over Talos's read-only
+// JSON:API, plus the live tail over Talos's WebSocket stream
 // (/api/audit-events/stream).
-export function hallmarkPlugin(): ForgeConsolePlugin {
-	const apiBase = apiBaseFor('hallmark');
+export function talosPlugin(): ForgeConsolePlugin {
+	const apiBase = apiBaseFor('talos');
 	return {
-		serviceId: 'hallmark',
-		title: 'Hallmark',
-		basePath: '/hallmark',
+		serviceId: 'talos',
+		title: 'Talos',
+		basePath: '/talos',
 		apiBase,
 		icon: ScrollText,
 		order: 2,

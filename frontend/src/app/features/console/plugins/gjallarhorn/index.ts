@@ -5,15 +5,15 @@ import ResourceListView from '@/app/features/console/views/components/ResourceLi
 import ResourceCreateForm from '@/app/features/console/views/components/ResourceCreateForm.vue';
 import ActionForm from '@/app/features/console/views/components/ActionForm.vue';
 
-// The Herald console plugin: a delivery-status board, a test-send form (now
+// The Gjallarhorn console plugin: a delivery-status board, a test-send form (now
 // covering the webhook channel + scheduledAt), and per-recipient channel
 // opt-out preferences.
-export function heraldPlugin(): ForgeConsolePlugin {
-	const apiBase = apiBaseFor('herald');
+export function gjallarhornPlugin(): ForgeConsolePlugin {
+	const apiBase = apiBaseFor('gjallarhorn');
 	return {
-		serviceId: 'herald',
-		title: 'Herald',
-		basePath: '/herald',
+		serviceId: 'gjallarhorn',
+		title: 'Gjallarhorn',
+		basePath: '/gjallarhorn',
 		apiBase,
 		icon: BellRing,
 		order: 3,

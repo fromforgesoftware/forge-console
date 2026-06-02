@@ -4,15 +4,15 @@ import { apiBaseFor } from '@/app/core/http/services';
 import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
 import ResourceCreateForm from '@/app/features/console/views/components/ResourceCreateForm.vue';
 
-// The Conduit console plugin: the read-only provider catalog, the owner's
+// The Gleipnir console plugin: the read-only provider catalog, the owner's
 // authorized connections (with lifecycle status), and a form to authorize a
 // new connection. Credential intake is API/CLI-only (it carries secrets).
-export function conduitPlugin(): ForgeConsolePlugin {
-	const apiBase = apiBaseFor('conduit');
+export function gleipnirPlugin(): ForgeConsolePlugin {
+	const apiBase = apiBaseFor('gleipnir');
 	return {
-		serviceId: 'conduit',
-		title: 'Conduit',
-		basePath: '/conduit',
+		serviceId: 'gleipnir',
+		title: 'Gleipnir',
+		basePath: '/gleipnir',
 		apiBase,
 		icon: Cable,
 		order: 4,

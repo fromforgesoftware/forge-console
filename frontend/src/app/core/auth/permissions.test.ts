@@ -31,7 +31,7 @@ describe('permissionMatches', () => {
 
 	it('colon resource type matches exactly', () => {
 		expect(permissionMatches('app:aegis.read', 'app:aegis.read')).toBe(true);
-		expect(permissionMatches('app:aegis.read', 'app:herald.read')).toBe(false);
+		expect(permissionMatches('app:aegis.read', 'app:gjallarhorn.read')).toBe(false);
 		expect(permissionMatches('app:aegis.read', 'app:aegis.write')).toBe(false);
 	});
 
