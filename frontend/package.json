@@ -11,8 +11,8 @@
 	},
 	"dependencies": {
 		"@dagrejs/dagre": "^3.0.0",
-		"@fromforgesoftware/ts-kit": "^0.1.0",
-		"@fromforgesoftware/vue-kit": "^0.1.0",
+		"@fromforgesoftware/ts-kit": "^0.1.1",
+		"@fromforgesoftware/vue-kit": "^0.1.1",
 		"@lucide/vue": "^1.17.0",
 		"@vue-flow/background": "^1.3.2",
 		"@vue-flow/controls": "^1.1.3",
