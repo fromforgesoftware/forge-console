@@ -33,14 +33,21 @@ import {
 import { enabledPlugins } from '@/app/features/console/application/registry';
 import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
 import { useAppsStore } from '@/app/features/console/stores/apps';
+import { usePluginsStore } from '@/app/features/console/stores/plugins';
 
 const route = useRoute();
 const router = useRouter();
 const apps = useAppsStore();
+const plugins = usePluginsStore();
 
 const expanded = reactive<Record<string, boolean>>({});
 
-const enabledApps = computed(() => enabledPlugins(apps.slugs));
+// Render the resolved hybrid plugin set once it's available; until then (or if
+// resolution hasn't run, e.g. in isolated tests) fall back to the bundled set
+// filtered by enabled slugs so the nav is never empty.
+const enabledApps = computed<ForgeConsolePlugin[]>(() =>
+	plugins.active.length ? plugins.active : enabledPlugins(apps.slugs),
+);
 
 // Top-level pages only — sub-paths like `realms/new` stay out of the nav.
 function subItemsFor(app: ForgeConsolePlugin) {

@@ -1,10 +1,47 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import federation from '@originjs/vite-plugin-federation';
+
+// Module-Federation HOST. The console exposes nothing itself; it loads app
+// plugin remotes at runtime (see src/.../console/application/runtime.ts).
+// remotes is left empty here because remotes are discovered from /apps and
+// registered dynamically — only `shared` matters at build time.
+//
+// `shared` pins every cross-boundary library as a SINGLETON whose
+// requiredVersion is read straight from this host's package.json. That makes a
+// remote reuse the host's already-loaded Vue/router/pinia/kits (the Grafana
+// import-map equivalent) instead of bundling a second copy — two Vues or two
+// pinias would silently break reactivity, the active router, and the store
+// graph. Reading the version from package.json guarantees it can never drift
+// from what we install.
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8')) as {
+	dependencies: Record<string, string>;
+};
+
+const singleton = (name: string) => ({
+	[name]: { singleton: true, requiredVersion: pkg.dependencies[name] },
+});
+
+const federationShared = {
+	...singleton('vue'),
+	...singleton('vue-router'),
+	...singleton('pinia'),
+	...singleton('@fromforgesoftware/ts-kit'),
+	// jsonapi-client is the only ts-kit subpath the host actually imports; share
+	// it explicitly so a remote importing the same subpath dedupes to the host
+	// copy rather than treating the deep path as a distinct module.
+	'@fromforgesoftware/ts-kit/jsonapi-client': {
+		singleton: true,
+		requiredVersion: pkg.dependencies['@fromforgesoftware/ts-kit'],
+	},
+	...singleton('@fromforgesoftware/vue-kit'),
+	...singleton('@fromforgesoftware/forge-console-plugin'),
+};
 
 const tsKit = (sub: string) => resolve(__dirname, `../../ts-kit/src/${sub}`);
 const consolePlugin = (sub: string) =>
@@ -47,7 +84,22 @@ const consolePluginAliases = useConsolePluginSource
 	: {};
 
 export default defineConfig({
-	plugins: [vue(), tailwindcss()],
+	plugins: [
+		vue(),
+		tailwindcss(),
+		federation({
+			name: 'forge_host',
+			// Remotes are registered at runtime from /apps, so none are listed
+			// statically. The empty map still makes this build a federation host
+			// and emits the `virtual:__federation__` dynamic-remote runtime the
+			// loader uses (__federation_method_setRemote / getRemote).
+			remotes: {},
+			shared: federationShared,
+		}),
+	],
+	// vite-plugin-federation requires a target that supports top-level await for
+	// its shared-module runtime; the default esnext target satisfies this.
+	build: { target: 'esnext' },
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),

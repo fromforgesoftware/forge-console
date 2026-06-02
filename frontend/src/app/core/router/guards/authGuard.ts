@@ -2,6 +2,7 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { useAuthStore } from '@/app/core/auth/store';
 import { useAppsStore } from '@/app/features/console/stores/apps';
 import { useRealmStore } from '@/app/features/console/stores/realm';
+import { usePluginsStore } from '@/app/features/console/stores/plugins';
 
 // On the first navigation we restore the session from the cookie and, when
 // authed, load the apps + realms the shell needs. A deep-link refresh
@@ -17,6 +18,10 @@ export async function authGuard(
 		await auth.fetchMe();
 		if (auth.isAuthenticated) {
 			await Promise.all([useAppsStore().load(), useRealmStore().load()]);
+			// Resolve the hybrid plugin set once /apps is known. Bundled plugins
+			// resolve eagerly here (their routes are already mounted statically);
+			// remote-backed sections still load lazily on first navigation.
+			await usePluginsStore().resolveAll();
 		}
 	}
 
