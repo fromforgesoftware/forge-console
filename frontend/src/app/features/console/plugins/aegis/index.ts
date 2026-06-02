@@ -1,9 +1,11 @@
 import { ShieldCheck } from '@lucide/vue';
-import type { ForgeConsolePlugin, ForgeConsolePage } from '@/app/features/console/domain/plugin';
+import type { ForgeConsolePlugin, ForgeConsolePage } from '@fromforgesoftware/forge-console-plugin';
+import {
+	ResourceListView,
+	ResourceCreateForm,
+	ActionForm,
+} from '@fromforgesoftware/forge-console-plugin/ui';
 import { apiBaseFor } from '@/app/core/http/services';
-import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
-import ResourceCreateForm from '@/app/features/console/views/components/ResourceCreateForm.vue';
-import ActionForm from '@/app/features/console/views/components/ActionForm.vue';
 import RoleBuilder from '@/app/features/console/views/components/RoleBuilder.vue';
 import BindingForm from '@/app/features/console/views/components/BindingForm.vue';
 import AegisOverview from '@/app/features/console/views/components/AegisOverview.vue';
@@ -24,6 +26,7 @@ export function aegisPlugin(): ForgeConsolePlugin {
 	const apiBase = apiBaseFor('aegis');
 	return {
 		serviceId: 'aegis',
+		type: 'app',
 		title: 'Aegis',
 		basePath: '/aegis',
 		apiBase,

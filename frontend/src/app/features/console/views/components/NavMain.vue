@@ -31,7 +31,7 @@ import {
 	SidebarMenuCollapsible,
 } from '@fromforgesoftware/vue-kit';
 import { enabledPlugins } from '@/app/features/console/application/registry';
-import type { ForgeConsolePlugin } from '@/app/features/console/domain/plugin';
+import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
 import { useAppsStore } from '@/app/features/console/stores/apps';
 
 const route = useRoute();

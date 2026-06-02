@@ -17,7 +17,7 @@ import {
 } from '@fromforgesoftware/vue-kit';
 import { useAuthStore } from '@/app/core/auth/store';
 import { fetchCollection, type JsonApiResource } from '@/app/core/http/jsonapi';
-import ResourceListView from './ResourceListView.vue';
+import { ResourceListView } from '@fromforgesoftware/forge-console-plugin/ui';
 
 // Aegis overview: headline KPIs above the fold, composition + comparison
 // charts in the middle, recent audit activity for drill-down. Counts are

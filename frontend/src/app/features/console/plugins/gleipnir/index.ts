@@ -1,8 +1,10 @@
 import { Cable } from '@lucide/vue';
-import type { ForgeConsolePlugin } from '@/app/features/console/domain/plugin';
+import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
+import {
+	ResourceListView,
+	ResourceCreateForm,
+} from '@fromforgesoftware/forge-console-plugin/ui';
 import { apiBaseFor } from '@/app/core/http/services';
-import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
-import ResourceCreateForm from '@/app/features/console/views/components/ResourceCreateForm.vue';
 
 // The Gleipnir console plugin: the read-only provider catalog, the owner's
 // authorized connections (with lifecycle status), and a form to authorize a
@@ -11,6 +13,7 @@ export function gleipnirPlugin(): ForgeConsolePlugin {
 	const apiBase = apiBaseFor('gleipnir');
 	return {
 		serviceId: 'gleipnir',
+		type: 'app',
 		title: 'Gleipnir',
 		basePath: '/gleipnir',
 		apiBase,

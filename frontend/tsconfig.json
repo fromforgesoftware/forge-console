@@ -31,7 +31,13 @@
 			],
 			"@fromforgesoftware/ts-kit/http": ["../../ts-kit/src/http/index.ts"],
 			"@fromforgesoftware/ts-kit/errors": ["../../ts-kit/src/errors/index.ts"],
-			"@fromforgesoftware/ts-kit/date": ["../../ts-kit/src/date/index.ts"]
+			"@fromforgesoftware/ts-kit/date": ["../../ts-kit/src/date/index.ts"],
+			"@fromforgesoftware/forge-console-plugin": [
+				"../../forge-console-plugin/src/index.ts"
+			],
+			"@fromforgesoftware/forge-console-plugin/ui": [
+				"../../forge-console-plugin/src/ui/index.ts"
+			]
 		}
 	},
 	"include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "env.d.ts"]

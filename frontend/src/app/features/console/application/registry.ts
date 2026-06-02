@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
-import type { ForgeConsolePlugin } from '../domain/plugin';
+import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
 import { aegisPlugin } from '../plugins/aegis';
 import { gleipnirPlugin } from '../plugins/gleipnir';
 import { talosPlugin } from '../plugins/talos';

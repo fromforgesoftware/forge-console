@@ -1,7 +1,7 @@
 import { ScrollText } from '@lucide/vue';
-import type { ForgeConsolePlugin } from '@/app/features/console/domain/plugin';
+import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
+import { ResourceListView } from '@fromforgesoftware/forge-console-plugin/ui';
 import { apiBaseFor } from '@/app/core/http/services';
-import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
 import LiveAuditTail from '@/app/features/console/views/components/LiveAuditTail.vue';
 
 // The Talos console plugin: the audit timeline over Talos's read-only
@@ -11,6 +11,7 @@ export function talosPlugin(): ForgeConsolePlugin {
 	const apiBase = apiBaseFor('talos');
 	return {
 		serviceId: 'talos',
+		type: 'app',
 		title: 'Talos',
 		basePath: '/talos',
 		apiBase,

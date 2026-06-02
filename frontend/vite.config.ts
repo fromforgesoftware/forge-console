@@ -7,12 +7,14 @@ import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 
 const tsKit = (sub: string) => resolve(__dirname, `../../ts-kit/src/${sub}`);
+const consolePlugin = (sub: string) =>
+	resolve(__dirname, `../../forge-console-plugin/src/${sub}`);
 
-// Local dev links the sibling ts-kit/vue-kit source checkouts so changes there
-// are picked up live. CI (and any consumer without those checkouts) instead
-// resolves the published @fromforgesoftware/*-kit packages pinned in
-// package.json — the same versions production ships. Auto-detect via the
-// presence of the sibling source so both paths work with no extra config.
+// Local dev links the sibling ts-kit/vue-kit/forge-console-plugin source
+// checkouts so changes there are picked up live. CI (and any consumer without
+// those checkouts) instead resolves the published @fromforgesoftware/* packages
+// pinned in package.json — the same versions production ships. Auto-detect via
+// the presence of the sibling source so both paths work with no extra config.
 const useKitSource =
 	process.env.FORGE_USE_PUBLISHED_KIT !== '1' &&
 	existsSync(resolve(__dirname, '../../ts-kit/src/index.ts'));
@@ -30,12 +32,27 @@ const kitAliases = useKitSource
 		}
 	: {};
 
+// The forge-console-plugin contract + generic renderers follow the same
+// sibling-source-or-published rule, gated on its own source presence so the
+// host still builds when only the kits are checked out.
+const useConsolePluginSource =
+	process.env.FORGE_USE_PUBLISHED_KIT !== '1' &&
+	existsSync(resolve(__dirname, '../../forge-console-plugin/src/index.ts'));
+
+const consolePluginAliases = useConsolePluginSource
+	? {
+			'@fromforgesoftware/forge-console-plugin/ui': consolePlugin('ui/index.ts'),
+			'@fromforgesoftware/forge-console-plugin': consolePlugin('index.ts'),
+		}
+	: {};
+
 export default defineConfig({
 	plugins: [vue(), tailwindcss()],
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
 			...kitAliases,
+				...consolePluginAliases,
 		},
 	},
 	test: {
@@ -48,7 +65,7 @@ export default defineConfig({
 			// source), inline the kits so Vite's resolver transforms them rather
 			// than handing them to Node's stricter native-ESM loader.
 			deps: {
-				inline: [/@fromforgesoftware\/(ts|vue)-kit/],
+				inline: [/@fromforgesoftware\/(ts|vue)-kit/, /@fromforgesoftware\/forge-console-plugin/],
 			},
 		},
 	},

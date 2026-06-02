@@ -1,9 +1,11 @@
 import { BellRing } from '@lucide/vue';
-import type { ForgeConsolePlugin } from '@/app/features/console/domain/plugin';
+import type { ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
+import {
+	ResourceListView,
+	ResourceCreateForm,
+	ActionForm,
+} from '@fromforgesoftware/forge-console-plugin/ui';
 import { apiBaseFor } from '@/app/core/http/services';
-import ResourceListView from '@/app/features/console/views/components/ResourceListView.vue';
-import ResourceCreateForm from '@/app/features/console/views/components/ResourceCreateForm.vue';
-import ActionForm from '@/app/features/console/views/components/ActionForm.vue';
 
 // The Gjallarhorn console plugin: a delivery-status board, a test-send form (now
 // covering the webhook channel + scheduledAt), and per-recipient channel
@@ -12,6 +14,7 @@ export function gjallarhornPlugin(): ForgeConsolePlugin {
 	const apiBase = apiBaseFor('gjallarhorn');
 	return {
 		serviceId: 'gjallarhorn',
+		type: 'app',
 		title: 'Gjallarhorn',
 		basePath: '/gjallarhorn',
 		apiBase,
