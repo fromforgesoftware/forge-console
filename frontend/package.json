@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@dagrejs/dagre": "^3.0.0",
-		"@fromforgesoftware/forge-console-plugin": "^0.1.2",
+		"@fromforgesoftware/forge-console-plugin": "^0.1.3",
 		"@fromforgesoftware/ts-kit": "^0.1.1",
 		"@fromforgesoftware/vue-kit": "^0.1.1",
 		"@lucide/vue": "^1.17.0",

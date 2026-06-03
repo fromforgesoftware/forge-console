@@ -3,3 +3,6 @@ dist/
 /server/dist/
 *.tsbuildinfo
 *.out
+
+# Claude Code local (personal) settings — not committed
+.claude/settings.local.json

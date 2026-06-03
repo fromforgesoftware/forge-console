@@ -1,6 +1,5 @@
 import type { RouteRecordRaw, Router } from 'vue-router';
 import type { ConsolePluginModule, ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
-import { aegisPlugin } from '../plugins/aegis';
 import { gleipnirPlugin } from '../plugins/gleipnir';
 import { talosPlugin } from '../plugins/talos';
 import { gjallarhornPlugin } from '../plugins/gjallarhorn';
@@ -20,7 +19,6 @@ const byOrder = (a: ForgeConsolePlugin, b: ForgeConsolePlugin) =>
 	(a.order ?? ORDER_LAST) - (b.order ?? ORDER_LAST);
 
 export const plugins: ForgeConsolePlugin[] = [
-	aegisPlugin(),
 	talosPlugin(),
 	gjallarhornPlugin(),
 	gleipnirPlugin(),
