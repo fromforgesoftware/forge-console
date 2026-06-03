@@ -1,30 +1,24 @@
 import type { RouteRecordRaw, Router } from 'vue-router';
 import type { ConsolePluginModule, ForgeConsolePlugin } from '@fromforgesoftware/forge-console-plugin';
-import { gleipnirPlugin } from '../plugins/gleipnir';
-import { talosPlugin } from '../plugins/talos';
-import { gjallarhornPlugin } from '../plugins/gjallarhorn';
 import type { AppInfo } from '@/app/features/console/stores/apps';
 import { apiBaseFor } from '@/app/core/http/services';
 import { importModule, hasRemote } from './runtime';
 
-// Compile-time plugin registry: every first-party console plugin bundled into
-// the host. In the hybrid model (4c) these are the FALLBACK — an app uses its
-// bundled plugin until it ships a runtime SystemJS plugin module (moduleUri on
-// its /apps entry), at which point the runtime plugin takes over. Adding a
-// bundled service = dropping a manifest file + one line here; the manifest
-// carries its own icon/order, so sidebar, dashboard, and palette need no
-// per-service edits.
+// Compile-time plugin registry. As of 4e every first-party app (aegis, talos,
+// gjallarhorn, gleipnir) ships its console plugin as a runtime SystemJS module
+// loaded from its app remote, so this array is now EMPTY. The hybrid
+// resolvePlugins/bundledFor machinery is kept intact: it now always takes the
+// remote path, and bundledFor returns undefined for everything (a graceful
+// no-op fallback). Re-introducing a compile-time plugin = pushing it here.
 const ORDER_LAST = Number.MAX_SAFE_INTEGER;
 const byOrder = (a: ForgeConsolePlugin, b: ForgeConsolePlugin) =>
 	(a.order ?? ORDER_LAST) - (b.order ?? ORDER_LAST);
 
-export const plugins: ForgeConsolePlugin[] = [
-	talosPlugin(),
-	gjallarhornPlugin(),
-	gleipnirPlugin(),
-].sort(byOrder);
+export const plugins: ForgeConsolePlugin[] = [];
 
-// bundledFor looks up the compile-time plugin for a slug, if one exists.
+// bundledFor looks up the compile-time plugin for a slug, if one exists. With
+// the registry empty (4e) it always returns undefined, so every app resolves
+// purely from its remote.
 function bundledFor(slug: string): ForgeConsolePlugin | undefined {
 	return plugins.find((p) => p.serviceId === slug);
 }
