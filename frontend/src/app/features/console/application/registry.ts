@@ -39,9 +39,13 @@ export function enabledPlugins(appSlugs: string[]): ForgeConsolePlugin[] {
 // resolvePlugin unwraps a loaded SystemJS module namespace to a
 // ForgeConsolePlugin, accepting a direct plugin object or a zero-arg factory,
 // via `default` or `plugin` (mirrors the package loader's contract).
-function resolvePlugin(mod: ConsolePluginModule): ForgeConsolePlugin | undefined {
+function resolvePlugin(mod: ConsolePluginModule, apiBase: string): ForgeConsolePlugin | undefined {
 	const exported = mod.default ?? mod.plugin;
-	if (typeof exported === 'function') return (exported as () => ForgeConsolePlugin)();
+	// A remote module.js is built before its apiBase is known, so a factory
+	// receives it here and threads it into its page props (the plugin's top-level
+	// apiBase is set again by the caller as a backstop).
+	if (typeof exported === 'function')
+		return (exported as (ctx: { apiBase: string }) => ForgeConsolePlugin)({ apiBase });
 	if (exported && typeof exported === 'object') return exported;
 	return undefined;
 }
@@ -62,7 +66,7 @@ export async function resolvePlugins(apps: AppInfo[]): Promise<ForgeConsolePlugi
 		if (hasRemote(app)) {
 			try {
 				const mod = await importModule(app.moduleUri);
-				const plugin = resolvePlugin(mod);
+				const plugin = resolvePlugin(mod, apiBaseFor(app.slug));
 				if (!plugin) {
 					throw new Error(`plugin module "${app.slug}" exposes no ForgeConsolePlugin`);
 				}
