@@ -34,6 +34,9 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE }}:${{ steps.v.outputs.ver }}
+          # The SPA build installs @fromforgesoftware/* from GitHub Packages.
+          secrets: |
+            npmtoken=${{ secrets.GITHUB_TOKEN }}
       - uses: azure/setup-helm@v4
       - name: Package + push Helm chart
         run: |
