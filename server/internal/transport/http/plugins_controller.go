@@ -31,8 +31,13 @@ func NewPluginsController() kitrest.Controller {
 }
 
 func (c *PluginsController) Routes(r kitrest.Router) {
-	// Mount strips the prefix, so the file server sees paths relative to the
-	// plugins dir (e.g. /aegis/module.js). http.FileServer sets the correct
-	// JS content-type by extension and only ever reads (no writes).
-	r.Mount(pluginsRoutePrefix, http.FileServer(http.Dir(c.dir)))
+	// Method-scoped GET (not Mount): a methodless "/public/plugins/" pattern
+	// conflicts with the SPA's "GET /{path...}" catch-all in Go's ServeMux
+	// (each is more specific in a different dimension → registration panics).
+	// "GET /public/plugins/{path...}" is strictly more specific, so both
+	// coexist. StripPrefix keeps file-server paths relative to the plugins
+	// dir (e.g. /aegis/module.js); http.FileServer sets the JS content-type
+	// by extension and only ever reads (no writes).
+	fs := http.StripPrefix(pluginsRoutePrefix, http.FileServer(http.Dir(c.dir)))
+	r.Get(pluginsRoutePrefix+"/{path...}", http.HandlerFunc(fs.ServeHTTP))
 }
