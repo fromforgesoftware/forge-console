@@ -6,8 +6,12 @@
 
 ARG GO_VERSION=1.25
 
+# Cross-compilation: both build stages run on the BUILDER's native arch (no
+# qemu emulation — Go cross-compiles via GOARCH, the SPA is arch-independent);
+# only the final distroless stage is per-target-platform.
+
 # --- SPA build (published @fromforgesoftware/* from GitHub Packages) ---
-FROM node:22-alpine AS web
+FROM --platform=$BUILDPLATFORM node:22-alpine AS web
 WORKDIR /src/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 # @fromforgesoftware/* live in GitHub Packages (auth required even when public);
@@ -22,14 +26,15 @@ ENV FORGE_USE_PUBLISHED_KIT=1
 RUN npx vite build
 
 # --- Go backend build (server + migrator) ---
-FROM golang:${GO_VERSION}-alpine AS server
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS server
+ARG TARGETOS TARGETARCH
 WORKDIR /src/server
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
 ENV GOWORK=off
-RUN CGO_ENABLED=0 go build -trimpath -o /out/server   ./cmd/server
-RUN CGO_ENABLED=0 go build -trimpath -o /out/migrator ./cmd/migrator
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/server   ./cmd/server
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/migrator ./cmd/migrator
 
 # --- runtime ---
 FROM gcr.io/distroless/static-debian12:nonroot
