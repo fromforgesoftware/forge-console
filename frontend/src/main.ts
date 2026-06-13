@@ -1,3 +1,9 @@
+// Must be first: installs Reflect.getMetadata before any decorated class (the
+// ts-kit JSON:API resources) evaluates. ts-kit self-imports this, but ships
+// `sideEffects: false`, so bundlers tree-shake its polyfill import away — the
+// app has to load it itself. Without it: "Reflect.getMetadata is not a function".
+import 'reflect-metadata';
+
 import './assets/index.css';
 
 import { createApp } from 'vue';
