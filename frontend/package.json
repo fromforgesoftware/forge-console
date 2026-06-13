@@ -13,7 +13,7 @@
 		"@dagrejs/dagre": "^3.0.0",
 		"@fromforgesoftware/forge-console-plugin": "^0.1.3",
 		"@fromforgesoftware/ts-kit": "^0.1.1",
-		"@fromforgesoftware/vue-kit": "^0.1.1",
+		"@fromforgesoftware/vue-kit": "^0.1.2",
 		"@lucide/vue": "^1.17.0",
 		"@vue-flow/background": "^1.3.2",
 		"@vue-flow/controls": "^1.1.3",

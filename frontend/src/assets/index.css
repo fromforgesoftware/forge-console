@@ -1,2 +1,12 @@
+/* vue-kit's Tailwind v4 design system must be consumed as BOTH artifacts:
+ * theme.css = `@import 'tailwindcss'` + the @theme tokens (so utilities like
+ * bg-card/bg-sidebar/text-sm get generated at this app's build); style.css =
+ * vue-kit's compiled component styles. Importing style.css alone yields an
+ * unstyled shell — its theme tokens are tree-shaken out. */
+@import '@fromforgesoftware/vue-kit/theme.css';
 @import '@fromforgesoftware/vue-kit/style.css';
+
 @source './';
+/* Tailwind v4 ignores node_modules; scan vue-kit's dist so the utilities its
+ * structural components (Sidebar, app shell) use internally are generated. */
+@source '../../node_modules/@fromforgesoftware/vue-kit/dist/**/*.{js,mjs}';
